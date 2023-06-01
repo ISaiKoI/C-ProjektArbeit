@@ -1,0 +1,37 @@
+Der Text wo hier steht wird noch nicht verarbeitet da das Start Kommando noch kommt
+Falls Steuerinformation vorhanden ist muss @start und @end als TAG am Zeilenanfang und ohne weiteren Text vorkommen
+Die Information zwischen @start und @end wird ausgeschnitten
+
+
+@start
+
+Globale Einstellungen koennen auch zur besseren Uebersicht aufgespalten werden
+
+@global { "signperline": 60, "sortbyvarname": false }
+@global { "namespace": "DHBW", "outputfilename": "sample", "outputtype": "CPP", "headerdir": ".\", "sourcedir": ".\" }
+
+@variable { "varname": "PIZZA", "seq": "ESC", "nl": "UNIX", "addtextpos": true, "addtextsegment": false, "doxygen": "Pizza als Fast-Food wurde in der U.S.A. erfunden" }
+In den USA sind zwei Typen weit verbreitet, "Chicago-style" und "New York-style" Pizza.
+Waehrend die New Yorker Variante mit ihrem sehr duennen Boden der italienischen Variante aehnelt, steht die Variante aus Chicago Kopf: Der Teig bildet eine Schuesselform, wird mit Mozzarellascheiben ausgelegt und mit weiteren Zutaten gefuellt.
+Zum Schluss wird das ganze von oben mit zerkleinerten Tomaten bestrichen und mit Parmesan und Oregano bestreut.
+@endvariable
+
+@variable { "varname": "QUICKBROWNFOX", "seq": "OCT", "nl": "DOS", "addtextpos": true, "addtextsegment": true, "doxygen": "Dieser Text wird mit ESC-Sequence gewandelt" }
+The quick brown fox jumps over the Lazy dog ...
+Das ist eine typische Testsequence fuer Texte (und um auch eine 'Datenstrecke' zu ueberpruefen).
+@endvariable
+
+@variable { "varname": "INTRODUCTION_CPP_AT_ATT", "seq": "HEX", "nl": "DOS", "addtextpos": true, "addtextsegment": true, "doxygen": "C++ und seine Herkunft" }
+C++ ist eine von der ISO genormte Programmiersprache. Sie wurde ab 1979 von Bjarne Stroustrup bei AT&T als Erweiterung der Programmiersprache C entwickelt.
+C++ ermoeglicht sowohl die effiziente und maschinennahe Programmierung als auch eine Programmierung auf hohem Abstraktionsniveau.
+Der Standard definiert auch eine Standardbibliothek, zu der verschiedene Implementierungen existieren.
+@endvariable
+
+@variable { "varname": "BRUSSELSRAWHEX", "seq": "RAWHEX", "nl": "MAC", "addtextpos": true, "addtextsegment": true, "doxygen": "Zeitungsartikel in rein Hexadezimal" }
+Bruessel Europa bleibt voraussichtlich eine Rezession erspart, trotz Ukrainekrieg und Energiekrise. Allerdings droht der Kontinent gegenueber den dynamischeren USA und China weiter zurueckzufallen. Ein wichtiger Grund dafuer ist die schleppende wirtschaftliche Entwicklung in Deutschland.
+Die EU-Kommission hat ihre Wachstumsprognose fuer das laufende und das kommende Jahr am Montag leicht angehoben. Die Bruesseler Behoerde rechnet mit einem Plus von 1,0 Prozent fuer 2023 und 1,7 Prozent fuer 2024. Die europaeische Wirtschaft sei in besserer Verfassung als noch im Herbst angenommen, sagte EU-Wirtschaftskommissar Paolo Gentiloni.
+@endvariable
+@end
+
+Hier ist bereits Ende, weiterer Text wird nicht geparst
+Optionen au sder Kommandozeile haben hoehere Prio als der Tag Global
