@@ -6,7 +6,7 @@
 #include <list>
 #include <regex>
 #include <dirent.h>
-#include "CTextToCPP.cpp"
+#include "CTextToCPP.h"
 
 using namespace std;
 
@@ -147,7 +147,7 @@ CTextToCPP *parseVariable(const string &line, CTextToCPP *obj, int signPerLine, 
     string stringContent = variables["content"];
 
     Variable var = Variable(varname, seq, nl, addTextPos, addTextSegment, doxygen, stringContent, signPerLine, lineNum);
-    CTextToCPP *a;
+    CTextToCPP *a = nullptr;
     if (seq == "ESC") {
         a = new CTextToEscSeq(var);
     } else if (seq == "HEX") {
@@ -157,6 +157,8 @@ CTextToCPP *parseVariable(const string &line, CTextToCPP *obj, int signPerLine, 
     } else if (seq == "OCT") {
         a = new CTextToOctSeq(var);
     }
+    if (a != nullptr)
+        a->convert();
     if (obj == nullptr) {
         obj = a;
     } else {
@@ -185,6 +187,7 @@ void processFile(const string &filename, Global global) {
     bool tagsFound = false; // Track if any tags were found
     CTextToCPP *obj = nullptr;
     int lineNum = 0; // Track line number
+    int varLine = 0;
     while (file.get(c)) {   // Read lines
         line += c;
         if (c == '\n') {
@@ -203,10 +206,11 @@ void processFile(const string &filename, Global global) {
                 } else if (line.find("@variable") != string::npos) {
                     variable += line;
                     processVar = true;
+                    varLine = lineNum;
                     line.clear();
                 } else if (line.find("@endvariable") != string::npos) {
                     processVar = false;
-                    obj = parseVariable(variable, obj, global.getSignPerLine(), lineNum);
+                    obj = parseVariable(variable, obj, global.getSignPerLine(), varLine);
                     variable.clear();
                     line.clear();
                 } else if (processVar && line != "@endvariable") {
@@ -223,7 +227,7 @@ void processFile(const string &filename, Global global) {
     stringstream content;
     content << file.rdbuf();
     file.close();
-    if (!tagsFound) {
+    if (!tagsFound) {   //TODO
         // If no tags were found, store the entire text as a single string
         string varname;
         if (filename.find('.') != string::npos) {
@@ -243,7 +247,7 @@ void processFile(const string &filename, Global global) {
         outputFile.close();
 
         cout << "File created successfully: " << outputFilename << '\n';
-    } else
+    } else if (obj != nullptr)
         obj->createFiles(global);
 }
 
@@ -256,7 +260,8 @@ vector<string> getFilesInDirectory(const string &directoryPath) {
         while ((entry = readdir(dir)) != nullptr) {
             string fileName = entry->d_name;
             if (fileName != "." && fileName != "..") {
-                string filePath = directoryPath + "/" + fileName;
+                string filePath = directoryPath;
+                filePath.append("/").append(fileName);
                 files.push_back(filePath);
             }
         }
@@ -267,11 +272,11 @@ vector<string> getFilesInDirectory(const string &directoryPath) {
 
 int main(int argc, char *argv[]) {
 
-    string outputFilename = "";
-    string outputType = "";
-    string headerDir = "";
-    string sourceDir = "";
-    string nameSpace = "";
+    string outputFilename;
+    string outputType;
+    string headerDir;
+    string sourceDir;
+    string nameSpace;
     int signPerLine = -1;
     bool sortByVarName = false;
     bool sort = false;
@@ -334,7 +339,7 @@ int main(int argc, char *argv[]) {
                     globalStatus.emplace_back("signPerLine");
                 } else if (string(longOpts[longIndex].name) == "sortbyvarname") {
                     // Input validation: sortByVarName should be "true" or "false"
-                    if (optarg != "true" && optarg != "false") {
+                    if (string(optarg) != "true" && string(optarg) != "false") {
                         cout << "Invalid value for sortByVarName. It should be either 'true' or 'false'." << endl;
                         return 1;
                     }
