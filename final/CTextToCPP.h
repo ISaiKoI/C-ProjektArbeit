@@ -19,11 +19,11 @@ protected:
     CTextToCPP *head = this;
 
 public:
-    explicit CTextToCPP(const Variable& vr = {}) : variable(vr) {}
+    explicit CTextToCPP(const Variable& vr) : variable(vr) {}
 
     virtual ~CTextToCPP() = default;
 
-    virtual void convert() = 0;
+    virtual void convert(int signPerLine) = 0;
 
     static bool createDirectory(const string &directoryPath) {
 #ifdef _WIN32
@@ -58,7 +58,13 @@ public:
         return true;
     }
 
-    void writeDeclaration(const Global& global) {
+    void writeDeclaration(Global global) {
+
+        // Add trailing slash to the header directory path if necessary
+        if (!global.getHeaderDir().empty() && global.getHeaderDir().back() != '\\') {
+            global.setHeaderDir(global.getHeaderDir() + "\\");
+        }
+
         string headerString = global.getOutputFilename();
         transform(headerString.begin(), headerString.end(), headerString.begin(), ::toupper);
         string headerFileName = global.getHeaderDir() + global.getOutputFilename() + ".h";
@@ -76,9 +82,9 @@ public:
         }
 
         if (global.isSortByVarName()) {
-            sort();
+            sort(); // Sort variables
         }
-
+        // Write to header file
         headerFile << "#ifndef _" << headerString << "_" << endl;
         headerFile << "#define _" << headerString << "_" << endl << endl;
 
@@ -125,7 +131,7 @@ public:
             cout << "Failed to create source file: " << sourceFileName << endl;
             return;
         }
-
+        // Write to source file
         sourceFile << "#include \"" << global.getOutputFilename() << ".h\"" << endl << endl;
         if (!global.getNameSpace().empty()) {
             sourceFile << "namespace " << global.getNameSpace() << " {" << endl << endl;
@@ -136,11 +142,7 @@ public:
             if (temp->variable.getSeq() == "RAWHEX")
                 sourceFile << "const char " << temp->variable.getVarname() << " = {";
             else
-                sourceFile << "const char * const " << temp->variable.getVarname() << " = {";
-            if (temp->variable.getAddTextPos())
-                sourceFile << "\t\t//Variable declared in line " << temp->variable.getLineNum() << " of Input" << endl;
-            else
-                sourceFile << endl;
+                sourceFile << "const char * const " << temp->variable.getVarname() << " = {" << endl;
             sourceFile << temp->variable.getConvertContent() << "};\n" << endl;
             if (temp->variable.getAddTextSegment()) {
                 sourceFile << "/*\nOriginal text from variable section '" << temp->variable.getVarname() << "'" << endl
@@ -224,12 +226,14 @@ public:
         this->clear();
     }
 
-    void addElement(CTextToCPP *nxt) {
-        this->next = nxt;
-    }
-
+    // Getter
     CTextToCPP *getNext() {
         return next;
+    }
+
+    // Setters
+    void addElement(CTextToCPP *nxt) {
+        this->next = nxt;
     }
 
     void setNext(CTextToCPP *nx) {
@@ -244,7 +248,7 @@ public:
 
 class CTextToEscSeq : public CTextToCPP {
 public:
-    explicit CTextToEscSeq(const Variable& vr = {}) : CTextToCPP(vr) {}
+    explicit CTextToEscSeq(Variable& vr) : CTextToCPP(vr) {}
 
     static string replaceString(const string &input, const string &target, const string &replacement) {
         string result = input;
@@ -256,22 +260,23 @@ public:
         return result;
     }
 
-    void convert() override {
+    void convert(int signPerLine) override {
         ostringstream encoded;
         string encodedString;
         int lineLength = 0;
-        int signPerLine = variable.getSignPerLine();
         string nl = variable.getNl();
         string input = variable.getStringContent();
+        input = replaceString(input, "\\", "\\\\"); // Replace chars which need to be escaped
         input = replaceString(input, "\"", "\\\"");
-        for (char c: input) {
-            if (c == input.back()) {
+        for (size_t i = 0; i < input.size(); ++i) {
+            char c = input[i];
+            if (i == input.size() - 1) {
                 continue;
             } else {
                 if (lineLength == 0) {
                     encoded << "\"";
                 }
-                if (c == '\n' || c == '\r') {
+                if (c == '\n' || c == '\r') {   // Replace newline depending on nl
                     if (nl == "DOS")
                         encoded << "\\r\\n\" \\\n";
                     else if (nl == "MAC")
@@ -299,14 +304,12 @@ public:
 
 class CTextToOctSeq : public CTextToCPP {
 public:
-    explicit CTextToOctSeq(const Variable& vr = {}) : CTextToCPP(vr) {}
+    explicit CTextToOctSeq(Variable& vr) : CTextToCPP(vr) {}
 
-    void convert() override {
+    void convert(int signPerLine) override {
         ostringstream encoded;
         string encodedString;
         unsigned int lineLength = 0;
-        int signPerLine = variable.getSignPerLine();
-        string nl = variable.getNl();
         string input = variable.getStringContent();
         for (char c: input) {
             if (lineLength == 0) {
@@ -335,14 +338,12 @@ public:
 
 class CTextToHexSeq : public CTextToCPP {
 public:
-    explicit CTextToHexSeq(const Variable& vr = {}) : CTextToCPP(vr) {}
+    explicit CTextToHexSeq(Variable& vr) : CTextToCPP(vr) {}
 
-    void convert() override {
+    void convert(int signPerLine) override {
         ostringstream encoded;
         string encodedString;
         unsigned int lineLength = 0;
-        int signPerLine = variable.getSignPerLine();
-        string nl = variable.getNl();
         string input = variable.getStringContent();
         for (char c: input) {
             if (lineLength == 0) {
@@ -376,15 +377,13 @@ public:
 
 class CTextToRawHexSeq : public CTextToCPP {
 public:
-    explicit CTextToRawHexSeq(const Variable& vr = {}) : CTextToCPP(vr) {}
+    explicit CTextToRawHexSeq(Variable& vr) : CTextToCPP(vr) {}
 
-    void convert() override {
+    void convert(int signPerLine) override {
         variable.setVarname(variable.getVarname() + "[]");
         ostringstream encoded;
         string encodedString;
         unsigned int lineLength = 0;
-        int signPerLine = variable.getSignPerLine();
-        string nl = variable.getNl();
         string input = variable.getStringContent();
         for (char c: input) {
             ostringstream rawHexEncoded;

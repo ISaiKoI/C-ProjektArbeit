@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class Variable {
+class Variable {        // Contains variable tag content
 private:
     string varname;
     string seq;
@@ -18,22 +18,27 @@ private:
     string stringContent;
     string convertContent;
     int lineNum;
-    int signPerLine;
+    static int counter;
 
 public:
 
-    Variable(string var = "variable", string sq = "ESC", string n = "UNIX",
-             bool addTxtPos = false,
-             bool addTxtSegment = false, string dxygen = "",
-             const string &strngContent = "", int signPerL = 60, int lNum = 0) :
-            varname(std::move(var)), seq(std::move(sq)), nl(std::move(n)), addTextPos(addTxtPos),
-            addTextSegment(addTxtSegment),
-            doxygen(std::move(dxygen)), stringContent(strngContent), convertContent(strngContent),
-            signPerLine(signPerL),
-            lineNum(lNum) {}
+    Variable(const string &var, const string &sq, const string &n,
+             bool addTxtPos,
+             bool addTxtSegment, string dxygen,
+             const string &strngContent, int lNum)
+            : varname(!var.empty() ? var : "VARIABLE" + to_string(++counter)),
+              seq(!sq.empty() ? sq : "ESC"),
+              nl(!n.empty() ? n : "UNIX"),
+              addTextPos(addTxtPos),
+              addTextSegment(addTxtSegment),
+              doxygen(std::move(dxygen)),
+              stringContent(!strngContent.empty() ? strngContent : ""),
+              convertContent(!strngContent.empty() ? strngContent : ""),
+              lineNum(lNum) {}
 
     virtual ~Variable() = default;
 
+    // Getters
     string getVarname() const {
         return varname;
     }
@@ -58,10 +63,6 @@ public:
         return addTextSegment;
     }
 
-    int getSignPerLine() const {
-        return signPerLine;
-    }
-
     int getLineNum() const {
         return lineNum;
     }
@@ -74,12 +75,9 @@ public:
         return seq;
     }
 
+    // Setters
     void setVarname(string var) {
         this->varname = std::move(var);
-    }
-
-    void setString(string s) {
-        this->stringContent = std::move(s);
     }
 
     void setConvertedString(string converted) {
@@ -88,11 +86,7 @@ public:
 
 };
 
-bool compareByName(const Variable &a, const Variable &b) {
-    return a.getVarname() < b.getVarname();
-}
-
-class Global {
+class Global {      // Contains global tag content
 private:
     string outputFilename;
     string outputType;
@@ -105,36 +99,18 @@ private:
 
 public:
 
-    Global(const string& filename = "generatedFile", const string& type = "C", const string& header = "./", const string& source = "./",
-           const string& ns = "", int signLine = 60, bool sortByName = false, bool sort = false,
-           list<string> status = {})
-            : globalStatus(std::move(status)) {
-
-        // Check if the sentinel values are present and conditionally assign the default values
-        if (!filename.empty())
-            outputFilename = filename;
-
-        if (!type.empty()) {
-            outputType = type;
-        }
-
-        if (!header.empty())
-            headerDir = header;
-
-        if (!source.empty())
-            sourceDir = source;
-
-        if (!ns.empty())
-            nameSpace = ns;
-
-        if (signLine != -1) {
-            signPerLine = signLine;
-        }
-
-        if (sort) {
-            sortByVarName = sortByName;
-        }
-    }
+    Global(const string &filename, const string &type, const string &header,
+           const string &source,
+           const string &ns, int signLine, bool sortByName,
+           const list<string> &status)
+            : outputFilename(!filename.empty() ? filename : "generatedFile"),
+              outputType(!type.empty() ? type : "C"),
+              headerDir(!header.empty() ? header : "./"),
+              sourceDir(!source.empty() ? source : "./"),
+              nameSpace(!ns.empty() ? ns : ""),
+              signPerLine(signLine > 0 ? signLine : 60),
+              sortByVarName(sortByName),
+              globalStatus(status) {}
 
     // Getters
     string getOutputFilename() const {
