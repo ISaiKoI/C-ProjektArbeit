@@ -23,7 +23,7 @@ void printHelp() {
          << "  --namespace <name>               Specify namespace\n"
          << "  --signperline <num>              Specify number of characters per line(e.g. 50)\n"
          << "  --sortbyvarname <bool>           Sort variables alphabetically(true or false)\n"
-         << "\nCreated by: Marcus Unglert, Tobias Schilling, Daniel Balla, Max Domitrovic\n"      //TODO
+         << "\nCreated by: Marcus Unglert, Tobias Schilling, Daniel Balla, Max Domitrovic\n"
          << "Contact: balla.daniel-it22@it.dhbw-ravensburg.de\n";
 }
 
