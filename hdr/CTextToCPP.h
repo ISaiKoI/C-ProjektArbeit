@@ -6,7 +6,17 @@
 #include <list>
 #include <algorithm>
 #include <fstream>
-#include <direct.h>
+#include <sys/stat.h> // For mkdir() on Unix-based systems
+
+#ifdef _WIN32
+
+#include <direct.h> // For _mkdir() on Windows
+
+#define MKDIR(directoryPath) _mkdir(directoryPath)
+#else
+#define MKDIR(directoryPath) mkdir(directoryPath, 0777)
+#endif
+
 #include <sstream>
 #include "Tags.h"
 
@@ -19,18 +29,14 @@ protected:
     CTextToCPP *head = this;
 
 public:
-    explicit CTextToCPP(const Variable& vr) : variable(vr) {}
+    explicit CTextToCPP(const Variable &vr) : variable(vr) {}
 
     virtual ~CTextToCPP() = default;
 
     virtual void convert(int signPerLine) = 0;
 
     static bool createDirectory(const string &directoryPath) {
-#ifdef _WIN32
-        int result = _mkdir(directoryPath.c_str());
-#else
-        int result = mkdir(directoryPath.c_str(), 0777);
-#endif
+        int result = MKDIR(directoryPath.c_str());
 
         return result == 0 || errno == EEXIST;
     }
@@ -115,7 +121,7 @@ public:
         cout << "Files created successfully!" << endl;
     }
 
-    void writeImplementation(const Global& global) {
+    void writeImplementation(const Global &global) {
         string type = global.getOutputType();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
         string sourceFileName = global.getSourceDir() + global.getOutputFilename() + "." + type;
@@ -170,7 +176,7 @@ public:
         }
 
         // Create arrays to store the objects and their variable names
-        vector<CTextToCPP*> objects(count);
+        vector<CTextToCPP *> objects(count);
         vector<std::string> varnames(count);
 
         // Traverse the linked list and store the objects and variable names in the arrays
@@ -185,7 +191,7 @@ public:
 
         // Sort the objects and variable names vectors based on the variable name
         std::sort(varnames.begin(), varnames.end());
-        std::sort(objects.begin(), objects.end(), [](CTextToCPP* a, CTextToCPP* b) {
+        std::sort(objects.begin(), objects.end(), [](CTextToCPP *a, CTextToCPP *b) {
             return a->variable.getVarname() < b->variable.getVarname();
         });
 
@@ -220,7 +226,7 @@ public:
         next = nullptr;
     }
 
-    void createFiles(const Global& global) {
+    void createFiles(const Global &global) {
         this->writeDeclaration(global);
         this->writeImplementation(global);
         this->clear();
@@ -248,7 +254,7 @@ public:
 
 class CTextToEscSeq : public CTextToCPP {
 public:
-    explicit CTextToEscSeq(Variable& vr) : CTextToCPP(vr) {}
+    explicit CTextToEscSeq(Variable &vr) : CTextToCPP(vr) {}
 
     static string replaceString(const string &input, const string &target, const string &replacement) {
         string result = input;
@@ -304,7 +310,7 @@ public:
 
 class CTextToOctSeq : public CTextToCPP {
 public:
-    explicit CTextToOctSeq(Variable& vr) : CTextToCPP(vr) {}
+    explicit CTextToOctSeq(Variable &vr) : CTextToCPP(vr) {}
 
     void convert(int signPerLine) override {
         ostringstream encoded;
@@ -338,7 +344,7 @@ public:
 
 class CTextToHexSeq : public CTextToCPP {
 public:
-    explicit CTextToHexSeq(Variable& vr) : CTextToCPP(vr) {}
+    explicit CTextToHexSeq(Variable &vr) : CTextToCPP(vr) {}
 
     void convert(int signPerLine) override {
         ostringstream encoded;
@@ -377,7 +383,7 @@ public:
 
 class CTextToRawHexSeq : public CTextToCPP {
 public:
-    explicit CTextToRawHexSeq(Variable& vr) : CTextToCPP(vr) {}
+    explicit CTextToRawHexSeq(Variable &vr) : CTextToCPP(vr) {}
 
     void convert(int signPerLine) override {
         variable.setVarname(variable.getVarname() + "[]");
