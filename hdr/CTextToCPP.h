@@ -7,18 +7,18 @@
 #include <algorithm>
 #include <fstream>
 #include <sys/stat.h> // For mkdir() on Unix-based systems
+#include <cerrno>
+#include <sstream>
+#include "Tags.h"
 
 #ifdef _WIN32
-
 #include <direct.h> // For _mkdir() on Windows
-
 #define MKDIR(directoryPath) _mkdir(directoryPath)
 #else
+#include <unistd.h> // For access() on Unix
 #define MKDIR(directoryPath) mkdir(directoryPath, 0777)
 #endif
 
-#include <sstream>
-#include "Tags.h"
 
 using namespace std;
 
@@ -35,22 +35,35 @@ public:
 
     virtual void convert(int signPerLine) = 0;
 
-    static bool createDirectory(const string &directoryPath) {
-        int result = MKDIR(directoryPath.c_str());
-
-        return result == 0 || errno == EEXIST;
+    static bool directoryExists(const std::string &directoryPath) {
+#ifdef _WIN32
+        struct _stat buffer{};
+        return (_stat(directoryPath.c_str(), &buffer) == 0 && buffer.st_mode & _S_IFDIR);
+#else
+        return (access(directoryPath.c_str(), F_OK) == 0);
+#endif
     }
 
-    static bool createDirectories(const string &path) {
-        size_t pos;
-        string delimiter = "/";
-        string directory;
-        string remainingPath = path;
+    static bool createDirectory(const std::string &directoryPath) {
+        if (directoryExists(directoryPath)) {
+            // Directory already exists
+            return true;
+        }
 
-        while ((pos = remainingPath.find(delimiter)) != string::npos) {
+        int result = MKDIR(directoryPath.c_str());
+        return (result == 0 || errno == EEXIST);
+    }
+
+    static bool createDirectories(const std::string &path) {
+        size_t pos;
+        std::string delimiter = "/";
+        std::string directory;
+        std::string remainingPath = path;
+
+        while ((pos = remainingPath.find(delimiter)) != std::string::npos) {
             directory = remainingPath.substr(0, pos);
             if (!directory.empty() && !createDirectory(directory)) {
-                cout << "Failed to create directory: " << directory << endl;
+                std::cout << "Failed to create directory: " << directory << std::endl;
                 return false;
             }
             remainingPath = remainingPath.substr(pos + delimiter.length());
@@ -58,7 +71,7 @@ public:
 
         // Create the last directory in the path
         if (!remainingPath.empty() && !createDirectory(remainingPath)) {
-            cout << "Failed to create directory: " << remainingPath << endl;
+            std::cout << "Failed to create directory: " << remainingPath << std::endl;
             return false;
         }
         return true;
