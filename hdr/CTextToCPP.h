@@ -12,7 +12,9 @@
 #include "Tags.h"
 
 #ifdef _WIN32
+
 #include <direct.h> // For _mkdir() on Windows
+
 #define MKDIR(directoryPath) _mkdir(directoryPath)
 #else
 #include <unistd.h> // For access() on Unix
@@ -45,6 +47,7 @@ public:
     }
 
     static bool createDirectory(const std::string &directoryPath) {
+        cout << "X" << directoryPath << "X" << endl;
         if (directoryExists(directoryPath)) {
             // Directory already exists
             return true;
@@ -79,10 +82,23 @@ public:
 
     void writeDeclaration(Global global) {
 
+        string headerDir = global.getHeaderDir();
+        // Erase possible spaces
+        headerDir.erase(remove(headerDir.begin(), headerDir.end(), ' '), headerDir.end());
+
         // Add trailing slash to the header directory path if necessary
         if (!global.getHeaderDir().empty() && global.getHeaderDir().back() != '\\') {
             global.setHeaderDir(global.getHeaderDir() + "\\");
         }
+
+#ifndef _WIN32
+        size_t pos = 0;
+        while ((pos = headerDir.find("\\\\", pos)) != string::npos) {
+            headerDir.replace(pos, 2, "\\");
+        }
+        replace(headerDir.begin(), headerDir.end(), '\\', '/');
+#endif
+        global.setHeaderDir(headerDir);
 
         string headerString = global.getOutputFilename();
         transform(headerString.begin(), headerString.end(), headerString.begin(), ::toupper);
@@ -134,11 +150,30 @@ public:
         cout << "Files created successfully!" << endl;
     }
 
-    void writeImplementation(const Global &global) {
+    void writeImplementation(Global global) {
+
+        string sourceDir = global.getSourceDir();
+        // Erase possible spaces
+        sourceDir.erase(remove(sourceDir.begin(), sourceDir.end(), ' '), sourceDir.end());
+
+        // Add trailing slash to the source directory path if necessary
+        if (!global.getSourceDir().empty() && global.getSourceDir().back() != '\\') {
+            global.setSourceDir(global.getSourceDir() + "\\");
+        }
+
+#ifndef _WIN32
+        size_t pos = 0;
+        while ((pos = sourceDir.find("\\\\", pos)) != string::npos) {
+            sourceDir.replace(pos, 2, "\\");
+        }
+        replace(sourceDir.begin(), sourceDir.end(), '\\', '/');
+#endif
+        global.setSourceDir(sourceDir);
+
         string type = global.getOutputType();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
         string sourceFileName = global.getSourceDir() + global.getOutputFilename() + "." + type;
-
+        cout << "source: X" << global.getSourceDir() << "X" << endl;
         // Create directories if they don't exist
         if (!createDirectories(global.getSourceDir())) {
             return;
