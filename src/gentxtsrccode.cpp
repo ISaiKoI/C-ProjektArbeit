@@ -37,7 +37,6 @@ unordered_map<string, string> parseToMapVariable(const string &input) {
     if (openingBraceIndex == string::npos || closingBraceIndex == string::npos) {
         cout << "Error: Invalid input format. Missing opening/closing bracket." << endl;
         exit(EXIT_FAILURE);
-        ;
     }
 
     string insideBraces = input.substr(openingBraceIndex + 1, closingBraceIndex - openingBraceIndex - 1);
@@ -101,7 +100,6 @@ unordered_map<string, string> parseToMapGlobal(const string &line) {
     if (openingBraceIndex == string::npos || closingBraceIndex == string::npos) {
         cout << "Error: Invalid input format. Missing opening/closing bracket." << endl;
         exit(EXIT_FAILURE);
-        ;
     }
 
     string insideBraces = line.substr(openingBraceIndex + 1, closingBraceIndex - openingBraceIndex - 1);

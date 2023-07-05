@@ -16,7 +16,7 @@ Waehrend die New Yorker Variante mit ihrem sehr duennen Boden der italienischen 
 Zum Schluss wird das ganze von oben mit zerkleinerten Tomaten bestrichen und mit Parmesan und Oregano bestreut.
 @endvariable
 
-@variable { "varname": "QUICKBROWNFOX", "seq": "OCT", "nl": "DOS", "addtextpos": true, "addtextsegment": true,"doxygen": "Dieser Text wird mit ESC-Sequence gewandelt" }
+@variable { "varname": "QUICKBROWNFOX", "seq": "OCT", "nl": "DOS", "addtextpos": true, "addtextsegment": true, "doxygen": "Dieser Text wird mit ESC-Sequence gewandelt" }
 The quick brown fox jumps over the Lazy dog ...
 Das ist eine typische Testsequence fuer Texte (und um auch eine 'Datenstrecke' zu ueberpruefen).
 @endvariable
