@@ -3,27 +3,16 @@
 
 #include <iostream>
 #include <string>
-#include <list>
 #include <algorithm>
 #include <fstream>
-#include <sys/stat.h> // For mkdir() on Unix-based systems
-#include <cerrno>
-#include <sstream>
+#include <filesystem>
 #include "Tags.h"
 
-#ifdef _WIN32
-
-#include <direct.h> // For _mkdir() on Windows
-
-#define MKDIR(directoryPath) _mkdir(directoryPath)
-#else
-#include <unistd.h> // For access() on Unix
-#define MKDIR(directoryPath) mkdir(directoryPath, 0777)
-#endif
-
-
+namespace fs = std::filesystem;
 using namespace std;
 
+
+//a --headerdir C:\Users\daballa\DHBW\C-ProjektArbeit\hdr --outputfilename head --sourcedir C:\Users\daballa\DHBW\C-ProjektArbeit ../sample.txt
 class CTextToCPP {
 protected:
     Variable variable;
@@ -37,47 +26,24 @@ public:
 
     virtual void convert(int signPerLine) = 0;
 
-    static bool directoryExists(const std::string &directoryPath) {
+    static void createDirectories(const std::string &path) {
+        try {
+            fs::path fsPath(path);
+            fs::create_directories(fsPath);
+        } catch (const fs::filesystem_error &ex) {
+            cout << "Failed to create directory: " << ex.what() << endl;
+        }
+    }
+
+    static string correctPath(const string &path) {
 #ifdef _WIN32
-        struct _stat buffer{};
-        return (_stat(directoryPath.c_str(), &buffer) == 0 && buffer.st_mode & _S_IFDIR);
+        std::string formattedPath = path;
+        std::replace(formattedPath.begin(), formattedPath.end(), '/', '\\');
 #else
-        return (access(directoryPath.c_str(), F_OK) == 0);
+        std::string formattedPath = path;
+    std::replace(formattedPath.begin(), formattedPath.end(), '\\', '/');
 #endif
-    }
-
-    static bool createDirectory(const std::string &directoryPath) {
-        cout << "X" << directoryPath << "X" << endl;
-        if (directoryExists(directoryPath)) {
-            // Directory already exists
-            return true;
-        }
-
-        int result = MKDIR(directoryPath.c_str());
-        return (result == 0 || errno == EEXIST);
-    }
-
-    static bool createDirectories(const std::string &path) {
-        size_t pos;
-        std::string delimiter = "/";
-        std::string directory;
-        std::string remainingPath = path;
-
-        while ((pos = remainingPath.find(delimiter)) != std::string::npos) {
-            directory = remainingPath.substr(0, pos);
-            if (!directory.empty() && !createDirectory(directory)) {
-                std::cout << "Failed to create directory: " << directory << std::endl;
-                return false;
-            }
-            remainingPath = remainingPath.substr(pos + delimiter.length());
-        }
-
-        // Create the last directory in the path
-        if (!remainingPath.empty() && !createDirectory(remainingPath)) {
-            std::cout << "Failed to create directory: " << remainingPath << std::endl;
-            return false;
-        }
-        return true;
+        return formattedPath;
     }
 
     void writeDeclaration(Global global) {
@@ -85,29 +51,18 @@ public:
         string headerDir = global.getHeaderDir();
         // Erase possible spaces
         headerDir.erase(remove(headerDir.begin(), headerDir.end(), ' '), headerDir.end());
+        global.setHeaderDir(correctPath(headerDir));
 
-        // Add trailing slash to the header directory path if necessary
-        if (!global.getHeaderDir().empty() && global.getHeaderDir().back() != '\\') {
-            global.setHeaderDir(global.getHeaderDir() + "\\");
+        // Add trailing separator to the header directory path if necessary
+        if (!global.getHeaderDir().empty() && global.getHeaderDir().back() != fs::path::preferred_separator) {
+            global.setHeaderDir(global.getHeaderDir() + static_cast<char>(fs::path::preferred_separator));
         }
-
-#ifndef _WIN32
-        size_t pos = 0;
-        while ((pos = headerDir.find("\\\\", pos)) != string::npos) {
-            headerDir.replace(pos, 2, "\\");
-        }
-        replace(headerDir.begin(), headerDir.end(), '\\', '/');
-#endif
-        global.setHeaderDir(headerDir);
 
         string headerString = global.getOutputFilename();
         transform(headerString.begin(), headerString.end(), headerString.begin(), ::toupper);
         string headerFileName = global.getHeaderDir() + global.getOutputFilename() + ".h";
-
         // Create directories if they don't exist
-        if (!createDirectories(global.getHeaderDir())) {
-            return;
-        }
+        createDirectories(global.getHeaderDir());
 
         ofstream headerFile(headerFileName);
 
@@ -147,7 +102,7 @@ public:
 
         headerFile << "#endif";
         headerFile.close();
-        cout << "Files created successfully!" << endl;
+        cout << "Header file created successfully!" << endl;
     }
 
     void writeImplementation(Global global) {
@@ -155,29 +110,18 @@ public:
         string sourceDir = global.getSourceDir();
         // Erase possible spaces
         sourceDir.erase(remove(sourceDir.begin(), sourceDir.end(), ' '), sourceDir.end());
+        global.setSourceDir(correctPath(sourceDir));
 
-        // Add trailing slash to the source directory path if necessary
-        if (!global.getSourceDir().empty() && global.getSourceDir().back() != '\\') {
-            global.setSourceDir(global.getSourceDir() + "\\");
+        // Add trailing separator to the source directory path if necessary
+        if (!global.getSourceDir().empty() && global.getSourceDir().back() != fs::path::preferred_separator) {
+            global.setSourceDir(global.getSourceDir() + static_cast<char>(fs::path::preferred_separator));
         }
-
-#ifndef _WIN32
-        size_t pos = 0;
-        while ((pos = sourceDir.find("\\\\", pos)) != string::npos) {
-            sourceDir.replace(pos, 2, "\\");
-        }
-        replace(sourceDir.begin(), sourceDir.end(), '\\', '/');
-#endif
-        global.setSourceDir(sourceDir);
 
         string type = global.getOutputType();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
         string sourceFileName = global.getSourceDir() + global.getOutputFilename() + "." + type;
-        cout << "source: X" << global.getSourceDir() << "X" << endl;
         // Create directories if they don't exist
-        if (!createDirectories(global.getSourceDir())) {
-            return;
-        }
+        createDirectories(global.getSourceDir());
 
         ofstream sourceFile(sourceFileName);
 
@@ -185,8 +129,13 @@ public:
             cout << "Failed to create source file: " << sourceFileName << endl;
             return;
         }
+
+        string sourcePath = global.getSourceDir() + sourceFileName;
+        string headerPath = global.getHeaderDir() + global.getOutputFilename() + ".h";
+        string include = fs::relative(headerPath, fs::path(sourcePath).parent_path()).string();
+        cout << include << endl;
         // Write to source file
-        sourceFile << "#include \"" << global.getOutputFilename() << ".h\"" << endl << endl;
+        sourceFile << "#include \"" << include << "\"" << endl << endl;
         if (!global.getNameSpace().empty()) {
             sourceFile << "namespace " << global.getNameSpace() << " {" << endl << endl;
         }
@@ -211,7 +160,7 @@ public:
         }
 
         sourceFile.close();
-        cout << "Files created successfully!" << endl;
+        cout << "Source file created successfully!" << endl;
     }
 
     void sort() {

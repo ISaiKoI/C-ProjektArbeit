@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
-project(C_ProgrammEntwurf)
+project(C_ProgrammEntwurf CXX)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CXX_STANDARD_REQUIRED ON)
 
-add_executable(C_ProjektArbeit src/gentxtsrccode.cpp hdr/CTextToCPP.h hdr/Tags.h)
+enable_language(CXX)
+
+add_executable(gentxtsrccode src/gentxtsrccode.cpp)
+

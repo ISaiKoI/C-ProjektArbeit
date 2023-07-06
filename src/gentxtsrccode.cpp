@@ -187,15 +187,41 @@ Global parseGlobal(const string &line, Global global) {
 CTextToCPP *parseVariable(const string &line, CTextToCPP *obj, int signPerLine, int lineNum) {
     unordered_map<string, string> variables = parseToMapVariable(line); // Map variable contents
 
+    bool missing = false;
     string varname = variables["varname"];
+    if (varname.empty()) {
+        cout << "No variable name found, using default name" << endl;
+        missing = true;
+    }
     string seq = variables["seq"];
+    if (seq.empty()) {
+        cout << "No sequenz found, using default sequenz: ESC" << endl;
+        missing = true;
+    }
     string nl = variables["nl"];
+    if (nl.empty()) {
+        cout << "No new line setting found, using default: UNIX" << endl;
+        missing = true;
+    }
     bool addTextPos;
     istringstream(variables["addtextpos"]) >> boolalpha >> addTextPos;
     bool addTextSegment;
     istringstream(variables["addtextsegment"]) >> boolalpha >> addTextSegment;
     string doxygen = variables["doxygen"];
+    if (doxygen.empty()) {
+        cout << "No doxygen found, using blank doxygen" << endl;
+        missing = true;
+    }
     string stringContent = variables["content"];
+    if (stringContent.empty()) {
+        cerr << "No text found, please provide a text or check the format and try again" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (missing) {
+        cout
+                << "If something wasn't found and it was provided, please check the input format and correct it appropriately"
+                << endl << "--------" << endl;
+    }
     // Create variable
     Variable var = Variable(varname, seq, nl, addTextPos, addTextSegment, doxygen, stringContent, lineNum);
     CTextToCPP *cText = nullptr;
@@ -228,7 +254,7 @@ void processFile(const string &filename, Global global) {
     ifstream file(filename); //open file
 
     if (!file) {
-        cout << "1Failed to open file: " << filename << '\n';
+        cout << "Failed to open file: " << filename << '\n';
         return;
     }
 
@@ -284,7 +310,7 @@ void processFile(const string &filename, Global global) {
         ifstream fileS(filename); //open file
 
         if (!fileS) {
-            cout << "1Failed to open file: " << filename << '\n';
+            cout << "Failed to open file: " << filename << '\n';
             return;
         }
         stringstream content;

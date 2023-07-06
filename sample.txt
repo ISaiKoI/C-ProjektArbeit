@@ -10,7 +10,7 @@ Globale Einstellungen koennen auch zur besseren Uebersicht aufgespalten werden
 @global { "signperline": 60, "sortbyvarname": false }
 @global { "namespace": "DHBW", "outputfilename": "sample", "outputtype": "CPP", "headerdir": ".\\", "sourcedir": ".\\" }
 
-@variable { "varname": "PIZZA", "seq": "ESC", "nl": "UNIX", "addtextpos": true, "addtextsegment": false, "doxygen": "Pizza als Fast-Food wurde in der U.S.A. erfunden" }
+@variable { "seq": "ESC", "nl": "UNIX", "addtextpos": true, "addtextsegment": false, "doxygen": "Pizza als Fast-Food wurde in der U.S.A. erfunden" }
 In den USA sind zwei Typen weit verbreitet, "Chicago-style" und "New York-style" Pizza.
 Waehrend die New Yorker Variante mit ihrem sehr duennen Boden der italienischen Variante aehnelt, steht die Variante aus Chicago Kopf: Der Teig bildet eine Schuesselform, wird mit Mozzarellascheiben ausgelegt und mit weiteren Zutaten gefuellt.
 Zum Schluss wird das ganze von oben mit zerkleinerten Tomaten bestrichen und mit Parmesan und Oregano bestreut.
