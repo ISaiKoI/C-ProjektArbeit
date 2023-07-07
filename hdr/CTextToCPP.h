@@ -36,27 +36,25 @@ public:
     }
 
     static string correctPath(const string &path) {
+        string formattedPath = path;
+        // Erase possible spaces
+        formattedPath.erase(remove(formattedPath.begin(), formattedPath.end(), ' '), formattedPath.end());
+        // Add trailing separator to the header directory path if necessary
+        if (!path.empty() && path.back() != fs::path::preferred_separator)
+            formattedPath += static_cast<char>(fs::path::preferred_separator);
+        // Replace slashes depending on system
 #ifdef _WIN32
-        std::string formattedPath = path;
-        std::replace(formattedPath.begin(), formattedPath.end(), '/', '\\');
+        replace(formattedPath.begin(), formattedPath.end(), '/', '\\');
 #else
-        std::string formattedPath = path;
-    std::replace(formattedPath.begin(), formattedPath.end(), '\\', '/');
+        replace(formattedPath.begin(), formattedPath.end(), '\\', '/');
 #endif
         return formattedPath;
     }
 
     void writeDeclaration(Global global) {
 
-        string headerDir = global.getHeaderDir();
-        // Erase possible spaces
-        headerDir.erase(remove(headerDir.begin(), headerDir.end(), ' '), headerDir.end());
-        global.setHeaderDir(correctPath(headerDir));
-
-        // Add trailing separator to the header directory path if necessary
-        if (!global.getHeaderDir().empty() && global.getHeaderDir().back() != fs::path::preferred_separator) {
-            global.setHeaderDir(global.getHeaderDir() + static_cast<char>(fs::path::preferred_separator));
-        }
+        global.setHeaderDir(correctPath(global.getHeaderDir()));
+        cout << global.getHeaderDir() << endl;
 
         string headerString = global.getOutputFilename();
         transform(headerString.begin(), headerString.end(), headerString.begin(), ::toupper);
@@ -107,15 +105,7 @@ public:
 
     void writeImplementation(Global global) {
 
-        string sourceDir = global.getSourceDir();
-        // Erase possible spaces
-        sourceDir.erase(remove(sourceDir.begin(), sourceDir.end(), ' '), sourceDir.end());
-        global.setSourceDir(correctPath(sourceDir));
-
-        // Add trailing separator to the source directory path if necessary
-        if (!global.getSourceDir().empty() && global.getSourceDir().back() != fs::path::preferred_separator) {
-            global.setSourceDir(global.getSourceDir() + static_cast<char>(fs::path::preferred_separator));
-        }
+        global.setSourceDir(correctPath(global.getSourceDir()));
 
         string type = global.getOutputType();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
@@ -130,9 +120,11 @@ public:
             return;
         }
 
-        string sourcePath = global.getSourceDir() + sourceFileName;
-        string headerPath = global.getHeaderDir() + global.getOutputFilename() + ".h";
+        string sourcePath = sourceFileName;
+        string headerPath = correctPath(global.getHeaderDir()) + global.getOutputFilename() + ".h";
         string include = fs::relative(headerPath, fs::path(sourcePath).parent_path()).string();
+        cout << sourcePath << endl;
+        cout << headerPath << endl;
         cout << include << endl;
         // Write to source file
         sourceFile << "#include \"" << include << "\"" << endl << endl;
