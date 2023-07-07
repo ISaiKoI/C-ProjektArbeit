@@ -54,7 +54,6 @@ public:
     void writeDeclaration(Global global) {
 
         global.setHeaderDir(correctPath(global.getHeaderDir()));
-        cout << global.getHeaderDir() << endl;
 
         string headerString = global.getOutputFilename();
         transform(headerString.begin(), headerString.end(), headerString.begin(), ::toupper);
@@ -120,12 +119,10 @@ public:
             return;
         }
 
+        // Get relative path for the include
         string sourcePath = sourceFileName;
         string headerPath = correctPath(global.getHeaderDir()) + global.getOutputFilename() + ".h";
         string include = fs::relative(headerPath, fs::path(sourcePath).parent_path()).string();
-        cout << sourcePath << endl;
-        cout << headerPath << endl;
-        cout << include << endl;
         // Write to source file
         sourceFile << "#include \"" << include << "\"" << endl << endl;
         if (!global.getNameSpace().empty()) {
