@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <list>
 #include <regex>
-#include <dirent.h>
 #include "../hdr/CTextToCPP.h"
 
 using namespace std;
